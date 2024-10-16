@@ -1,55 +1,109 @@
+import json
 import os
-import time
+import requests
 from time import sleep
 
-start_time = time.time()
-auto_refresh = True
-refresh_delay = 60
-username = "YOUR_USERNAME_HERE"
-log_path = "C:/Users/COMPUTER_USERNAME/AppData/Roaming/.minecraft/logs/latest.log"
-fkdr_digits = 3
+
+api_key = "YOUR API KEY HERE" # get a new one at https://developer.hypixel.net/dashboard
+
+
+username = "YOUR USERNAME HERE"
+refresh_interval = 60 # Refresh interval in seconds, the API is slow so a faster refresh is not always useful
+
+
+modes = [
+	"",
+	"eight_one_",
+	"eight_two_",
+	"four_three_",
+	"four_four_",
+	"two_four_"
+]
+statistics = [
+	"kills_bedwars",
+	"deaths_bedwars",
+	"games_played_bedwars",
+	"wins_bedwars",
+	"losses_bedwars",
+	"final_kills_bedwars",
+	"final_deaths_bedwars",
+	"beds_broken_bedwars",
+	"beds_lost_bedwars"
+]
+
 
 while True:
+	r = requests.get(f'https://api.mojang.com/users/profiles/minecraft/{username}')
+	minecraft_user_data = json.loads(r.text)
+	minecraft_user_id = minecraft_user_data['id']
 
-	file = open(log_path, "r")
-	file_lines = file.readlines()
+	r = requests.get(f'https://api.hypixel.net/player?key={api_key}&uuid={minecraft_user_id}')
+	hypixel_user_data = json.loads(r.text)
+	hypixel_user_data = hypixel_user_data["player"]["stats"]["Bedwars"]
 
-	final_kills = 0
-	final_deaths = 0
-	f_k_d_r = 0
-	bed_breaks = 0
-	games_played = 0
-	games_won = 0
+	for mode in modes:
+		for statistic in statistics:
+			try:
+				exec(f"{"STARTING" + mode + statistic} = {hypixel_user_data[mode + statistic]}")
+			except KeyError:
+				pass
 
-	for file_line in file_lines:
-		if f"was {username}'s final " in file_line:
-			final_kills += 1
-			if final_deaths >= 1:
-				f_k_d_r = final_kills / final_deaths
-			else:
-				f_k_d_r = final_kills
-		elif username in file_line and "FINAL KILL!" in file_line:
-			final_deaths += 1
-			f_k_d_r = final_kills / final_deaths
-		elif "Bed was bed #" in file_line and f"destroyed by {username}!" in file_line:
-			bed_breaks += 1
-		elif "Protect your bed and destroy the enemy beds." in file_line:
-			games_played += 1
-		elif "Nether Star!" in file_line:
-			games_won += 1
+	while True:
+		sleep(refresh_interval)
 
-	os.system('cls')
-	print(f"Session Time: {time.strftime('%H:%M:%S', time.gmtime(int(time.time() - start_time)))}")
-	print(f"Final Kills: {final_kills}")
-	print(f"Final Deaths: {final_deaths}")
-	print(f"FKDR: {round(f_k_d_r, fkdr_digits)}")
-	print(f"Bed Breaks: {bed_breaks}")
-	print(f"Games Played: {games_played}")
-	print(f"Games Won: {games_won}")
+		r = requests.get(f'https://api.hypixel.net/player?key={api_key}&uuid={minecraft_user_id}')
+		hypixel_user_data = json.loads(r.text)
+		hypixel_user_data = hypixel_user_data["player"]["stats"]["Bedwars"]
 
-	file.close()
+		os.system('cls')
+		for mode in modes:
+			for statistic in statistics:
+				try:
+					exec(f"{mode + statistic} = {hypixel_user_data[mode + statistic]}")
+					exec(f"{mode + statistic} -= {"STARTING" + mode + statistic}")
+				except KeyError:
+					pass
 
-	if auto_refresh:
-		sleep(60)
-	else:
-		input("Press Enter To Refresh:")
+
+		for mode in modes:
+			if eval(mode + "games_played_bedwars") > 0:
+				if mode == "":
+					print("Overall")
+				elif mode == "eight_one_":
+					print("Solos")
+				elif mode == "eight_two_":
+					print("Duos")
+				elif mode == "four_three_":
+					print("Trios")
+				elif mode == "four_four_":
+					print("Squads")
+				elif mode == "two_four_":
+					print("4v4")
+				print()
+
+				print(f"Kills: {eval(mode + "kills_bedwars")}")
+				print(f"Deaths: {eval(mode + "deaths_bedwars")}")
+				try:
+					print(f"KDR: {round(eval(mode + "kills_bedwars") / eval(mode + "deaths_bedwars"), 2)}")
+				except ZeroDivisionError:
+					print(f"KDR: {round(eval(mode + "kills_bedwars"), 2)}")
+				print(f"Games Played: {eval(mode + "games_played_bedwars")}")
+				print(f"Wins: {eval(mode + "wins_bedwars")}")
+				print(f"Losses: {eval(mode + "losses_bedwars")}")
+				try:
+					print(f"WLR: {round(eval(mode + "wins_bedwars") / eval(mode + "losses_bedwars"), 2)}")
+				except ZeroDivisionError:
+					print(f"WLR: {round(eval(mode + "wins_bedwars"), 2)}")
+				print(f"Final Kills: {eval(mode + "final_kills_bedwars")}")
+				print(f"Final Deaths: {eval(mode + "final_deaths_bedwars")}")
+				try:
+					print(f"FKDR: {round(eval(mode + "final_kills_bedwars") / eval(mode + "final_deaths_bedwars"), 2)}")
+				except ZeroDivisionError:
+					print(f"FKDR: {round(eval(mode + "final_kills_bedwars"), 2)}")
+				print(f"Beds Broken: {eval(mode + "beds_broken_bedwars")}")
+				print(f"Beds Lost: {eval(mode + "beds_lost_bedwars")}")
+				try:
+					print(f"BBLR: {round(eval(mode + "beds_broken_bedwars") / eval(mode + "beds_lost_bedwars"), 2)}")
+				except ZeroDivisionError:
+					print(f"BBLR: {round(eval(mode + "beds_broken_bedwars"), 2)}")
+				print("============================================")
