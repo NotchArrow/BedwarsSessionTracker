@@ -21,3 +21,6 @@ The size can be tweaked and it can be set to display only your stats for a certa
 ![image](https://github.com/user-attachments/assets/982b83f7-9c81-4e3e-8c34-5d1824d70312)
 ![image](https://github.com/user-attachments/assets/ef34e53f-c1dc-45cb-a4f0-9e6f6f69b769)
 
+# Notes
+Issues? Questions? Concerns? Comments?
+I don't check GitHub often. The fastest way to reach me is on discord @NotchArrow
